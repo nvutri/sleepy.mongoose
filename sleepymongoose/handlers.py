@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from bson.son import SON
-from pymongo import Connection, ASCENDING, DESCENDING
+from pymongo import ASCENDING, DESCENDING
+from pymongo import MongoClient as Connection
 from pymongo.errors import ConnectionFailure, ConfigurationError, OperationFailure, AutoReconnect
 from bson import json_util
 
@@ -51,7 +52,9 @@ class MongoHandler:
             return self.connections[name]
         
         try:
-            connection = Connection(uri, network_timeout = 2)
+           connection = Connection(uri);
+           #connection = Connection();
+           #connection = Connection(uri, network_timeout = 2)
         except (ConnectionFailure, ConfigurationError):
             return None
 
@@ -230,8 +233,8 @@ class MongoHandler:
         fields = None
         if 'fields' in args:
             fields = self._get_son(args['fields'][0], out)
-            if fields == None:
-                return
+#            if fields == None:
+#               return
 
         limit = 0
         if 'limit' in args:
@@ -240,9 +243,8 @@ class MongoHandler:
         skip = 0
         if 'skip' in args:
             skip = int(args['skip'][0])
-
-        cursor = conn[db][collection].find(spec=criteria, fields=fields, limit=limit, skip=skip)
-
+        cursor = conn[db][collection].find(limit=limit, skip=skip)
+        
         sort = None
         if 'sort' in args:
             sort = self._get_son(args['sort'][0], out)
@@ -317,8 +319,7 @@ class MongoHandler:
         batch = []
 
         try:
-            while len(batch) < batch_size:
-                batch.append(cursor.next())
+            batch=map(lambda x:x, cursor);
         except AutoReconnect:
             out(json.dumps({"ok" : 0, "errmsg" : "auto reconnecting, please try again"}))
             return
